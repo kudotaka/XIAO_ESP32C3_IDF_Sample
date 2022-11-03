@@ -28,7 +28,7 @@
 #include "wifi.h"
 #include "ui.h"
 
-static const char *TAG = "WIFI";
+static const char *TAG = "MY-WIFI";
 
 
 esp_err_t wifi_isConnected(void) {

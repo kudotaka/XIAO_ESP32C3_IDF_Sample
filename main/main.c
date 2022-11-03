@@ -19,59 +19,42 @@
 #include "SHT3X.h"
 #endif
 
+#if ( CONFIG_SOFTWARE_UNIT_ENV2_SUPPORT \
+    || CONFIG_SOFTWARE_UNIT_SK6812_SUPPORT \
+    || CONFIG_SOFTWARE_UNIT_4DIGIT_DISPLAY_SUPPORT \
+    || CONFIG_SOFTWARE_UNIT_6DIGIT_DISPLAY_SUPPORT \
+    || CONFIG_SOFTWARE_UNIT_LED_SUPPORT )
+#include "m5unit.h"
+#endif
 
-static const char *TAG = "MAIN";
-
+static const char *TAG = "MY-MAIN";
 
 #ifdef CONFIG_SOFTWARE_BUTTON_SUPPORT
 TaskHandle_t xButton;
-Button_t* button_d2_pin;
-Button_t* button_d0_pin;
+Button_t* button_d1_pin;
 
 static void button_task(void* pvParameters) {
     ESP_LOGI(TAG, "start button_task");
 
-    if (Button_Enable(PORT_D2_PIN) == ESP_OK) {
-        button_d2_pin = Button_Attach(PORT_D2_PIN);
-    }
-    if (Button_Enable(PORT_D0_PIN) == ESP_OK) {
-        button_d0_pin = Button_Attach(PORT_D0_PIN);
+    if (Button_Enable(PORT_D1_PIN) == ESP_OK) {
+        button_d1_pin = Button_Attach(PORT_D1_PIN);
     }
 
     while(1){
-        if (Button_WasPressed(button_d2_pin)) {
-            ESP_LOGI(TAG, "PORT_D2_PIN BUTTON PRESSED!");
+        if (Button_WasPressed(button_d1_pin)) {
+            ESP_LOGI(TAG, "PORT_D1_PIN BUTTON PRESSED!");
 #ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
             ui_button_label_update(true);
 #endif
         }
-        if (Button_WasReleased(button_d2_pin)) {
-            ESP_LOGI(TAG, "PORT_D2_PIN BUTTON RELEASED!");
+        if (Button_WasReleased(button_d1_pin)) {
+            ESP_LOGI(TAG, "PORT_D1_PIN BUTTON RELEASED!");
 #ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
             ui_button_label_update(false);
 #endif
         }
-        if (Button_WasLongPress(button_d2_pin, pdMS_TO_TICKS(1000))) { // 1Sec
-            ESP_LOGI(TAG, "PORT_D2_PIN BUTTON LONGPRESS!");
-#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
-            ui_button_label_update(false);
-#endif
-        }
-
-        if (Button_WasPressed(button_d0_pin)) {
-            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON PRESSED!");
-#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
-            ui_button_label_update(true);
-#endif
-        }
-        if (Button_WasReleased(button_d0_pin)) {
-            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON RELEASED!");
-#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
-            ui_button_label_update(false);
-#endif
-        }
-        if (Button_WasLongPress(button_d0_pin, pdMS_TO_TICKS(1000))) { // 1Sec
-            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON LONGPRESS!");
+        if (Button_WasLongPress(button_d1_pin, pdMS_TO_TICKS(1000))) { // 1Sec
+            ESP_LOGI(TAG, "PORT_D1_PIN BUTTON LONGPRESS!");
 #ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
             ui_button_label_update(false);
 #endif
@@ -254,9 +237,147 @@ void vLoopUnitEnv2Task(void *pvParametes)
 }
 #endif
 
+#if CONFIG_SOFTWARE_UNIT_LED_SUPPORT
+// SELECT GPIO_NUM_XX OR PORT_DX_PIN
+TaskHandle_t xExternalLED;
+Led_t* led_ext1;
+static void external_led_task(void* pvParameters) {
+    ESP_LOGI(TAG, "start external_led_task");
+    Led_Init();
+    if (Led_Enable(PORT_D1_PIN) == ESP_OK) {
+        led_ext1 = Led_Attach(PORT_D1_PIN);
+    }
+    while(1){
+        Led_OnOff(led_ext1, true);
+        vTaskDelay(pdMS_TO_TICKS(100));
+
+        Led_OnOff(led_ext1, false);
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+    vTaskDelete(NULL); // Should never get to here...
+}
+#endif
+
+#if ( CONFIG_SOFTWARE_UNIT_4DIGIT_DISPLAY_SUPPORT || CONFIG_SOFTWARE_UNIT_6DIGIT_DISPLAY_SUPPORT )
+TaskHandle_t xDigitDisplay;
+DigitDisplay_t* digitdisplay_1;
+void vLoopUnitDigitDisplayTask(void *pvParametes)
+{
+    ESP_LOGI(TAG, "start Digit Display");
+
+// Sample Rowdata
+//  --0x01--
+// |        |
+//0x20     0x02
+// |        |
+//  --0x40- -
+// |        |
+//0x10     0x04
+// |        |
+//  --0x08--   0x80
+
+    uint8_t anime[] = {0x00, 0x30, 0x38, 0x78, 0x79, 0x7f};
+    uint8_t animeCurrent = 0;
+    uint8_t animeMax = sizeof(anime)/sizeof(uint8_t);
+    uint8_t animeDigitPosition = 1;
+    uint8_t animeDigitMax = DIGIT_COUNT;
+    uint8_t data = 0x00;
+
+    Tm1637_Init();
+    if (Tm1637_Enable(PORT_D9_PIN, PORT_D10_PIN) == ESP_OK) {
+        digitdisplay_1 = Tm1637_Attach(PORT_D9_PIN, PORT_D10_PIN, BRIGHT_TYPICAL);
+    } else {
+        ESP_LOGE(TAG, "Digit Display Tm1637_Enable Error");
+        vTaskDelete(NULL);
+    }
+    while(1) {
+        Tm1637_ClearDisplay(digitdisplay_1);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        for (animeDigitPosition = 1; animeDigitPosition < animeDigitMax+1; animeDigitPosition++) {
+            for (animeCurrent = 0; animeCurrent < animeMax; animeCurrent++) {
+                for (uint8_t position = DIGIT_COUNT; position > animeDigitPosition-1; position--) {
+                    for (uint8_t digit = DIGIT_COUNT; digit > 0; digit--) {
+                        data = 0x00;
+                        if (digit == position) {
+                            data += 0x80;
+                        } else {
+                            //data = 0x00;
+                        }
+
+                        if (digit == animeDigitPosition) {
+                            data += anime[animeCurrent];
+                        } else if (digit < animeDigitPosition) {
+                            data = 0xff;
+                        }
+
+                        Tm1637_DisplayBitRowdata(digitdisplay_1, digit-1, data);
+                    }
+                    vTaskDelay(pdMS_TO_TICKS(1000));
+                }
+            }
+        }
+    }
+    vTaskDelete(NULL); // Should never get to here...
+
+/*
+// Sample number
+    uint8_t listDisp_1[DIGIT_COUNT];
+    uint8_t count = 0;
+    Tm1637_Init();
+    if (Tm1637_Enable(PORT_D9_PIN, PORT_D10_PIN) == ESP_OK) {
+        digitdisplay_1 = Tm1637_Attach(PORT_D9_PIN, PORT_D10_PIN, BRIGHT_TYPICAL);
+    } else {
+        ESP_LOGE(TAG, "Digit Display Tm1637_Enable Error");
+        vTaskDelete(NULL);
+    }
+    Tm1637_ClearDisplay(digitdisplay_1);
+    while(1){
+        if (count == UINT8_MAX) {
+            count = 0;
+        }
+        if (count%2) {
+            for (uint8_t i = 0; i < DIGIT_COUNT; i++) {
+                listDisp_1[i] = i;
+            }
+        } else {
+            for (uint8_t i = 0; i < DIGIT_COUNT; i++) {
+                listDisp_1[i] = i+4;
+            }
+        }
+        Tm1637_DisplayAll(digitdisplay_1, listDisp_1);
+        count++;
+        vTaskDelay(pdMS_TO_TICKS(300));
+    }
+    vTaskDelete(NULL); // Should never get to here...
+*/
+/*
+// Sample message
+    Tm1637_Init();
+    if (Tm1637_Enable(PORT_D9_PIN, PORT_D10_PIN) == ESP_OK) {
+        digitdisplay_1 = Tm1637_Attach(PORT_D9_PIN, PORT_D10_PIN, BRIGHT_TYPICAL);
+    } else {
+        ESP_LOGE(TAG, "Digit Display Tm1637_Enable Error");
+        vTaskDelete(NULL);
+    }
+    while (1) {
+        Tm1637_ClearDisplay(digitdisplay_1);
+        vTaskDelay(pdMS_TO_TICKS(500));
+        Tm1637_DisplayStr(digitdisplay_1, "HELL0-1234567890", 500);
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+    vTaskDelete(NULL); // Should never get to here...
+*/
+}
+#endif
 
 void app_main() {
     ESP_LOGI(TAG, "app_main() start.");
+    esp_log_level_set("*", ESP_LOG_ERROR);
+//    esp_log_level_set("wifi", ESP_LOG_INFO);
+//    esp_log_level_set("gpio", ESP_LOG_INFO);
+    esp_log_level_set("MY-MAIN", ESP_LOG_INFO);
+//    esp_log_level_set("MY-UI", ESP_LOG_INFO);
+//    esp_log_level_set("MY-WIFI", ESP_LOG_INFO);
 
     XIAO_Init();
 
@@ -306,6 +427,11 @@ void app_main() {
 #ifdef CONFIG_SOFTWARE_I2C_UNIT_ENV2_SUPPORT
     // UI ACTIVE
     xTaskCreatePinnedToCore(&vLoopUnitEnv2Task, "unit_env2_task", 4096 * 1, NULL, 2, &xUnitEnv2, 1);
+#endif
+
+#if ( CONFIG_SOFTWARE_UNIT_4DIGIT_DISPLAY_SUPPORT || CONFIG_SOFTWARE_UNIT_6DIGIT_DISPLAY_SUPPORT )
+    // DIGIT DISPLAY
+    xTaskCreatePinnedToCore(&vLoopUnitDigitDisplayTask, "vLoopUnitDigitDisplayTask", 4096 * 1, NULL, 2, &xDigitDisplay, 1);
 #endif
 
 }

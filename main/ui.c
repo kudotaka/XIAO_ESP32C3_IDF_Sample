@@ -56,7 +56,7 @@ static lv_obj_t *datetime_txtlabel;
 static lv_obj_t *button_label;
 #endif
 
-static char *TAG = "UI";
+static char *TAG = "MY-UI";
 
 #ifdef CONFIG_SOFTWARE_MODEL_SEEED_XIAO_ESP32C3
 void ui_wifi_label_update(bool state){

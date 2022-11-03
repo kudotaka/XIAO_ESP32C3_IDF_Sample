@@ -28,3 +28,10 @@
 - LEDは、点滅する。
 - ディスプレイは、WiFi表示、日付/時間表示、湿度・温度表示、ボタンクリック時のOK表示をする。
 <img src="images/display0.png" width="400px">
+
+### 2022.11.03追記
+<img src="images/digit0.png" width="300px">
+
+- PCBをJLCPCBにて製造。
+- 秋月にてOSL10564-Iシリーズではんだ付け。
+- 6桁のDigitDisplayが完成。
