@@ -40,7 +40,9 @@ void ui_button_label_update(bool state);
 #endif
 
 #ifdef CONFIG_SOFTWARE_MODEL_SEEED_XIAO_ESP32C3
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
 void ui_wifi_label_update(bool state);
+#endif
 #endif
 
 void ui_init();

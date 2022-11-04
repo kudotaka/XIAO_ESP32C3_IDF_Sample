@@ -10,9 +10,14 @@ typedef enum {
     LONGPRESS = (1 << 2),   //button was long pressed.
 } PressEvent;
 
+typedef enum _ButtonActiveType{
+    ACTIVE_LOW = 0,
+    ACTIVE_HIGH = 1,
+} ButtonActiveType;
+
 typedef struct _Button_t  {
     gpio_num_t pin;             //GPIO
-
+    ButtonActiveType type;
     uint8_t value;              //Current button touched state
     uint8_t last_value;         //Previous button touched state
     uint32_t last_press_time;   //FreeRTOS ticks when button was last touched
@@ -22,8 +27,8 @@ typedef struct _Button_t  {
 } Button_t;
 
 void Button_Init();
-esp_err_t Button_Enable(gpio_num_t pin);
-Button_t* Button_Attach(gpio_num_t pin);
+esp_err_t Button_Enable(gpio_num_t pin, ButtonActiveType type);
+Button_t* Button_Attach(gpio_num_t pin, ButtonActiveType type);
 uint8_t Button_WasPressed(Button_t* button);
 uint8_t Button_WasReleased(Button_t* button);
 uint8_t Button_IsPress(Button_t* button);

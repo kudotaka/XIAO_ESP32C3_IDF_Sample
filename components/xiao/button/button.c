@@ -18,15 +18,20 @@ void Button_Init() {
     xTaskCreatePinnedToCore(Button_UpdateTask, "Button", 2 * 1024, NULL, 1, NULL, 0);
 }
 
-esp_err_t Button_Enable(gpio_num_t pin) {
+esp_err_t Button_Enable(gpio_num_t pin, ButtonActiveType type) {
     esp_err_t ret = ESP_OK;
     gpio_config_t io_conf;
     io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
     io_conf.pin_bit_mask = (1ULL << pin);
 
     io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+    if (type == ACTIVE_LOW) {
+        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+    } else {
+        io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+        io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    }
     ret = gpio_config(&io_conf);
     if (ret != ESP_OK){
         ESP_LOGE(TAG, "Error configuring GPIO %d. Error code: 0x%x.", pin, ret);
@@ -34,10 +39,11 @@ esp_err_t Button_Enable(gpio_num_t pin) {
     return ret;
 }
 
-Button_t* Button_Attach(gpio_num_t pin) {
+Button_t* Button_Attach(gpio_num_t pin, ButtonActiveType type) {
     xSemaphoreTake(button_lock, portMAX_DELAY);
     Button_t *button = (Button_t *)malloc(sizeof(Button_t) * 1);
     button->pin = pin;
+    button->type = type;
     button->last_value = 0;
     button->last_press_time = 0;
     button->long_press_time = 0;
@@ -128,7 +134,11 @@ static void Button_UpdateTask(void *arg) {
         xSemaphoreTake(button_lock, portMAX_DELAY);
         button = button_ahead;
         while (button != NULL) {
-            Button_Update(button, !Button_Read(button->pin));
+            if (button->type == ACTIVE_LOW) {
+                Button_Update(button, !Button_Read(button->pin));
+            } else {
+                Button_Update(button, Button_Read(button->pin));
+            }
             button = button->next;
         }
         xSemaphoreGive(button_lock);

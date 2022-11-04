@@ -37,6 +37,7 @@
 
 #define MAX_TEXTAREA_LENGTH 128
 
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
 static lv_obj_t *active_screen;
 static lv_obj_t *wifi_label;
 
@@ -56,7 +57,9 @@ static lv_obj_t *datetime_txtlabel;
 static lv_obj_t *button_label;
 #endif
 
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
 static char *TAG = "MY-UI";
+#endif
 
 #ifdef CONFIG_SOFTWARE_MODEL_SEEED_XIAO_ESP32C3
 void ui_wifi_label_update(bool state){
@@ -116,9 +119,12 @@ void ui_temperature_update(int32_t value){
     xSemaphoreGive(xGuiSemaphore);
 }
 #endif
+#endif
 
 
 void ui_init() {
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+
     xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
 
     ESP_LOGI(TAG, "ui_init() start.");
@@ -169,4 +175,6 @@ void ui_init() {
 #endif
 
     xSemaphoreGive(xGuiSemaphore);
+#endif
+
 }

@@ -32,15 +32,28 @@ static const char *TAG = "MY-MAIN";
 #ifdef CONFIG_SOFTWARE_BUTTON_SUPPORT
 TaskHandle_t xButton;
 Button_t* button_d1_pin;
+Button_t* button_d7_pin;
+Button_t* button_d6_pin;
+Button_t* button_d0_pin;
 
 static void button_task(void* pvParameters) {
     ESP_LOGI(TAG, "start button_task");
 
-    if (Button_Enable(PORT_D1_PIN) == ESP_OK) {
-        button_d1_pin = Button_Attach(PORT_D1_PIN);
+    if (Button_Enable(PORT_D1_PIN, ACTIVE_LOW) == ESP_OK) {
+        button_d1_pin = Button_Attach(PORT_D1_PIN, ACTIVE_LOW);
     }
 
+    if (Button_Enable(PORT_D7_PIN, ACTIVE_LOW) == ESP_OK) {
+        button_d7_pin = Button_Attach(PORT_D7_PIN, ACTIVE_LOW);
+    }
+    if (Button_Enable(PORT_D6_PIN, ACTIVE_LOW) == ESP_OK) {
+        button_d6_pin = Button_Attach(PORT_D6_PIN, ACTIVE_LOW);
+    }
+    if (Button_Enable(PORT_D0_PIN, ACTIVE_HIGH) == ESP_OK) {
+        button_d0_pin = Button_Attach(PORT_D0_PIN, ACTIVE_HIGH);
+    }
     while(1){
+
         if (Button_WasPressed(button_d1_pin)) {
             ESP_LOGI(TAG, "PORT_D1_PIN BUTTON PRESSED!");
 #ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
@@ -55,6 +68,61 @@ static void button_task(void* pvParameters) {
         }
         if (Button_WasLongPress(button_d1_pin, pdMS_TO_TICKS(1000))) { // 1Sec
             ESP_LOGI(TAG, "PORT_D1_PIN BUTTON LONGPRESS!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+
+        if (Button_WasPressed(button_d7_pin)) {
+            ESP_LOGI(TAG, "PORT_D7_PIN BUTTON PRESSED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(true);
+#endif
+        }
+        if (Button_WasReleased(button_d7_pin)) {
+            ESP_LOGI(TAG, "PORT_D7_PIN BUTTON RELEASED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+        if (Button_WasLongPress(button_d7_pin, pdMS_TO_TICKS(1000))) { // 1Sec
+            ESP_LOGI(TAG, "PORT_D7_PIN BUTTON LONGPRESS!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+        if (Button_WasPressed(button_d6_pin)) {
+            ESP_LOGI(TAG, "PORT_D6_PIN BUTTON PRESSED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(true);
+#endif
+        }
+        if (Button_WasReleased(button_d6_pin)) {
+            ESP_LOGI(TAG, "PORT_D6_PIN BUTTON RELEASED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+        if (Button_WasLongPress(button_d6_pin, pdMS_TO_TICKS(1000))) { // 1Sec
+            ESP_LOGI(TAG, "PORT_D6_PIN BUTTON LONGPRESS!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+        if (Button_WasPressed(button_d0_pin)) {
+            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON PRESSED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(true);
+#endif
+        }
+        if (Button_WasReleased(button_d0_pin)) {
+            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON RELEASED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+        if (Button_WasLongPress(button_d0_pin, pdMS_TO_TICKS(1000))) { // 1Sec
+            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON LONGPRESS!");
 #ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
             ui_button_label_update(false);
 #endif
