@@ -219,35 +219,6 @@ void vLoopClockTask(void *pvParametes)
 }
 #endif
 
-#ifdef CONFIG_SOFTWARE_EXTERNAL_LED_SUPPORT
-TaskHandle_t xExtLED;
-static void external_led_task(void* pvParameters) {
-    ESP_LOGI(TAG, "start external_led_task");
-
-    if (XIAO_Port_PinMode(PORT_D3_PIN, OUTPUT) != ESP_OK) {
-        ESP_LOGI(TAG, "XIAO_Port_PinMode() is error. port:%d", PORT_D3_PIN);
-    } else {
-        vTaskDelay(pdMS_TO_TICKS(100));
-        while (1) {
-            if (XIAO_Port_Write(PORT_D3_PIN, PORT_LEVEL_LOW) != ESP_OK) {
-                ESP_LOGE(TAG, "XIAO_Port_Write(LOW) is error. port:%d", PORT_D3_PIN);
-                break;
-            }
-//            ESP_LOGI(TAG, "XIAO_Port_Write(LOW) is OFF");
-            vTaskDelay(pdMS_TO_TICKS(800));
-
-            if (XIAO_Port_Write(PORT_D3_PIN, PORT_LEVEL_HIGH) != ESP_OK) {
-                ESP_LOGE(TAG, "XIAO_Port_Write(HIGH) is error. port:%d", PORT_D3_PIN);
-                break;
-            }
-//            ESP_LOGI(TAG, "XIAO_Port_Write(HIGH) is ON");
-            vTaskDelay(pdMS_TO_TICKS(200));
-        }
-    }
-    vTaskDelete(NULL); // Should never get to here...
-}
-#endif
-
 #ifdef CONFIG_SOFTWARE_SK6812_SUPPORT
 TaskHandle_t xRGBLedBlink;
 void vLoopRGBLedBlinkTask(void *pvParametes)
@@ -309,18 +280,24 @@ void vLoopUnitEnv2Task(void *pvParametes)
 // SELECT GPIO_NUM_XX OR PORT_DX_PIN
 TaskHandle_t xExternalLED;
 Led_t* led_ext1;
+Led_t* led_ext2;
 static void external_led_task(void* pvParameters) {
     ESP_LOGI(TAG, "start external_led_task");
     Led_Init();
-    if (Led_Enable(PORT_D1_PIN) == ESP_OK) {
-        led_ext1 = Led_Attach(PORT_D1_PIN);
+    if (Led_Enable(PORT_D1_PIN, ACTIVE_HIGH) == ESP_OK) {
+        led_ext1 = Led_Attach(PORT_D1_PIN, ACTIVE_HIGH);
+    }
+    if (Led_Enable(PORT_D3_PIN, ACTIVE_LOW) == ESP_OK) {
+        led_ext2 = Led_Attach(PORT_D3_PIN, ACTIVE_LOW);
     }
     while(1){
         Led_OnOff(led_ext1, true);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        Led_OnOff(led_ext2, true);
+        vTaskDelay(pdMS_TO_TICKS(500));
 
         Led_OnOff(led_ext1, false);
-        vTaskDelay(pdMS_TO_TICKS(200));
+        Led_OnOff(led_ext2, false);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
     vTaskDelete(NULL); // Should never get to here...
 }
@@ -462,12 +439,10 @@ void app_main() {
     xTaskCreatePinnedToCore(&button_task, "button_task", 4096 * 1, NULL, 2, &xButton, 1);
 #endif
 
-
-#ifdef CONFIG_SOFTWARE_EXTERNAL_LED_SUPPORT
-    // External LED
-    xTaskCreatePinnedToCore(&external_led_task, "external_led_task", 4096 * 1, NULL, 2, &xExtLED, 1);
+#ifdef CONFIG_SOFTWARE_UNIT_LED_SUPPORT
+    // EXTERNAL LED
+    xTaskCreatePinnedToCore(&external_led_task, "external_led_task", 4096 * 1, NULL, 2, &xExternalLED, 1);
 #endif
-
 
 #ifdef CONFIG_SOFTWARE_SK6812_SUPPORT
     // RGB LED BLINK
