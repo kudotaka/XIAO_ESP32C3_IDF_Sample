@@ -321,13 +321,53 @@ void vLoopUnitDigitDisplayTask(void *pvParametes)
 // |        |
 //  --0x08--   0x80
 
+
+// Sample time
+#ifdef CONFIG_SOFTWARE_RTC_SUPPORT
+    rtc_date_t rtcdate;
+    uint8_t currentHour = 0;
+    uint8_t currentMinute = 0;
+    uint8_t currentSecond = 0;
+
+    Tm1637_Init();
+    if (Tm1637_Enable(PORT_D9_PIN, PORT_D10_PIN) == ESP_OK) {
+        digitdisplay_1 = Tm1637_Attach(PORT_D9_PIN, PORT_D10_PIN, BRIGHT_DARKEST);
+    } else {
+        ESP_LOGE(TAG, "Digit Display Tm1637_Enable Error");
+        vTaskDelete(NULL);
+    }
+    Tm1637_ClearDisplay(digitdisplay_1);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    while(1) {
+        PCF8563_GetTime(&rtcdate);
+        if (currentHour != rtcdate.hour) {
+            currentHour = rtcdate.hour;
+            Tm1637_DisplayBitAddPoint(digitdisplay_1, 0, currentHour / 10, POINT_OFF);
+            Tm1637_DisplayBitAddPoint(digitdisplay_1, 1, currentHour % 10, POINT_ON);
+        }
+        if (currentMinute != rtcdate.minute) {
+            currentMinute = rtcdate.minute;
+            Tm1637_DisplayBitAddPoint(digitdisplay_1, 2, currentMinute / 10, POINT_OFF);
+            Tm1637_DisplayBitAddPoint(digitdisplay_1, 3, currentMinute % 10, POINT_ON);
+        }
+        if (currentSecond != rtcdate.second) {
+            currentSecond = rtcdate.second;
+            Tm1637_DisplayBitAddPoint(digitdisplay_1, 4, currentSecond / 10, POINT_OFF);
+            Tm1637_DisplayBitAddPoint(digitdisplay_1, 5, currentSecond % 10, POINT_OFF);
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+    vTaskDelete(NULL); // Should never get to here...
+#endif
+
+/*
+// Sample animetion
     uint8_t anime[] = {0x00, 0x30, 0x38, 0x78, 0x79, 0x7f};
     uint8_t animeCurrent = 0;
     uint8_t animeMax = sizeof(anime)/sizeof(uint8_t);
     uint8_t animeDigitPosition = 1;
     uint8_t animeDigitMax = DIGIT_COUNT;
     uint8_t data = 0x00;
-
     Tm1637_Init();
     if (Tm1637_Enable(PORT_D9_PIN, PORT_D10_PIN) == ESP_OK) {
         digitdisplay_1 = Tm1637_Attach(PORT_D9_PIN, PORT_D10_PIN, BRIGHT_TYPICAL);
@@ -363,7 +403,7 @@ void vLoopUnitDigitDisplayTask(void *pvParametes)
         }
     }
     vTaskDelete(NULL); // Should never get to here...
-
+*/
 /*
 // Sample number
     uint8_t listDisp_1[DIGIT_COUNT];
