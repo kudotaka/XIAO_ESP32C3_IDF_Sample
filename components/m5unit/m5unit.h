@@ -24,3 +24,7 @@
 #if CONFIG_SOFTWARE_UNIT_LED_SUPPORT
 #include "led.h"
 #endif
+
+#if CONFIG_SOFTWARE_I2C_LCD_ST7032_SUPPORT
+#include "st7032.h"
+#endif

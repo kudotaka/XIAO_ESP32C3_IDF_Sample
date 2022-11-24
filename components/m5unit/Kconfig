@@ -17,4 +17,25 @@ menu "M5Unit enable"
     config SOFTWARE_UNIT_6DIGIT_DISPLAY_SUPPORT
         bool "UNIT-6DigitDisplay"
         default n
+    config SOFTWARE_I2C_LCD_ST7032_SUPPORT
+        bool "I2C-LCD-ST7032-Hardware"
+        default n
+    choice
+        prompt "Set Model"
+        depends on SOFTWARE_I2C_LCD_ST7032_SUPPORT
+        default SOFTWARE_MODEL_AQM0802
+        config SOFTWARE_MODEL_AQM0802
+            bool "MODEL-AQM0802"
+        config SOFTWARE_MODEL_AQM1602
+            bool "MODEL-AQM1602"
+    endchoice
+    choice
+        prompt "Use Backlight"
+        depends on SOFTWARE_I2C_LCD_ST7032_SUPPORT
+        default SOFTWARE_NOT_USE_BACKLIGHT
+        config SOFTWARE_USE_BACKLIGHT
+            bool "USE-BACKLIGHT"
+        config SOFTWARE_NOT_USE_BACKLIGHT
+            bool "NOT-USE-BACKLIGHT"
+    endchoice
 endmenu

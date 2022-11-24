@@ -23,6 +23,7 @@
     || CONFIG_SOFTWARE_UNIT_SK6812_SUPPORT \
     || CONFIG_SOFTWARE_UNIT_4DIGIT_DISPLAY_SUPPORT \
     || CONFIG_SOFTWARE_UNIT_6DIGIT_DISPLAY_SUPPORT \
+    || CONFIG_SOFTWARE_I2C_LCD_ST7032_SUPPORT \
     || CONFIG_SOFTWARE_UNIT_LED_SUPPORT )
 #include "m5unit.h"
 #endif
@@ -455,6 +456,77 @@ void vLoopUnitDigitDisplayTask(void *pvParametes)
 }
 #endif
 
+#ifdef CONFIG_SOFTWARE_I2C_LCD_ST7032_SUPPORT
+TaskHandle_t xLcdSt7032;
+uint8_t degree[] = {
+    0b11000,
+    0b11000,
+    0b00110,
+    0b01001,
+    0b01000,
+    0b01001,
+    0b00110,
+    0b00000,
+};
+
+void vLoopLcdSt7032Task(void *pvParametes)
+{
+    ESP_LOGI(TAG, "start LCD ST7032");
+
+    esp_err_t ret = ESP_OK;
+#ifdef CONFIG_SOFTWARE_USE_BACKLIGHT
+    ret = St7032_Init(I2C_NUM_0, PORT_SDA_PIN, PORT_SCL_PIN, PORT_I2C_STANDARD_BAUD, PORT_D9_PIN);
+#else
+    ret = St7032_Init(I2C_NUM_0, PORT_SDA_PIN, PORT_SCL_PIN, PORT_I2C_STANDARD_BAUD);
+#endif
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "LCD ST7032 INIT Error");
+        return;
+    }
+    ESP_LOGI(TAG, "LCD ST7032 INIT is OK!");
+
+    St7032_CreateOrignalCharacter(0x01, degree, sizeof(degree)/sizeof(uint8_t));
+
+    uint8_t moji1[] = "Hello";
+    uint8_t moji2[] = "  World!";
+    while(1) {
+        St7032_ClearDisplay();
+        St7032_ReturnHome();
+#ifdef CONFIG_SOFTWARE_USE_BACKLIGHT
+        St7032_Backlight_OnOff(PORT_LEVEL_HIGH);
+#endif
+        for(uint8_t i = 0; i < sizeof(moji1)/sizeof(uint8_t); i++) {
+            St7032_WriteData(moji1[i]);
+        }
+       
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        St7032_CursorByPotision(2, 1);
+        for(uint8_t i = 0; i < sizeof(moji2)/sizeof(uint8_t); i++) {
+            St7032_WriteData(moji2[i]);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        St7032_ClearDisplay();
+        vTaskDelay(pdMS_TO_TICKS(1000));
+#ifdef CONFIG_SOFTWARE_USE_BACKLIGHT
+        St7032_Backlight_OnOff(PORT_LEVEL_LOW);
+#endif
+        St7032_ShowDisplayByPotision(1, 2, 0x32);
+        St7032_ShowDisplayByPotision(1, 3, 0x35);
+        St7032_ShowDisplayByPotision(1, 4, 0x2E);
+        St7032_ShowDisplayByPotision(1, 5, 0x39);
+        St7032_ShowDisplayByPotision(1, 7, 0x01);
+        St7032_ShowDisplayByPotision(2, 2, 0x34);
+        St7032_ShowDisplayByPotision(2, 3, 0x30);
+        St7032_ShowDisplayByPotision(2, 4, 0x2E);
+        St7032_ShowDisplayByPotision(2, 5, 0x35);
+        St7032_ShowDisplayByPotision(2, 7, 0x25);
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
+    vTaskDelete(NULL); // Should never get to here...
+}
+#endif
+
 void app_main() {
     ESP_LOGI(TAG, "app_main() start.");
     esp_log_level_set("*", ESP_LOG_ERROR);
@@ -515,6 +587,11 @@ void app_main() {
 #if ( CONFIG_SOFTWARE_UNIT_4DIGIT_DISPLAY_SUPPORT || CONFIG_SOFTWARE_UNIT_6DIGIT_DISPLAY_SUPPORT )
     // DIGIT DISPLAY
     xTaskCreatePinnedToCore(&vLoopUnitDigitDisplayTask, "vLoopUnitDigitDisplayTask", 4096 * 1, NULL, 2, &xDigitDisplay, 1);
+#endif
+
+#ifdef CONFIG_SOFTWARE_I2C_LCD_ST7032_SUPPORT
+    // LCD_ST7032
+    xTaskCreatePinnedToCore(&vLoopLcdSt7032Task, "lcd_st7032_task", 4096 * 1, NULL, 2, &xLcdSt7032, 1);
 #endif
 
 }
