@@ -1,5 +1,5 @@
-// https://akizukidenshi.com/download/ds/akizuki/ae-aqm0802a.pdf
-// http://akizukidenshi.com/download/ds/xiamen/AQM1602_rev2.pdf
+// https://akizukidenshi.com/download/ds/sitronix/st7032.pdf
+// https://akizukidenshi.com/download/ds/xiamen/AQM0802A-FLW-GBW.pdf
 #pragma once
 
 #ifdef __cplusplus
@@ -11,6 +11,7 @@ extern "C" {
 #include "driver/gpio.h"
 #include "i2c_device.h"
 
+uint8_t St7032_ConvertHexNumber(uint8_t number);
 void St7032_CreateOrignalCharacter(uint8_t address, uint8_t* pattern, uint8_t pattern_len);
 void St7032_CursorByPotision(uint8_t row, uint8_t column);
 void St7032_ShowDisplayByPotision(uint8_t row, uint8_t column, uint8_t data);

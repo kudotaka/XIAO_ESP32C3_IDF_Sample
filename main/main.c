@@ -485,6 +485,26 @@ void vLoopLcdSt7032Task(void *pvParametes)
     }
     ESP_LOGI(TAG, "LCD ST7032 INIT is OK!");
 
+// Sample ALL Character
+    St7032_Backlight_OnOff(PORT_LEVEL_HIGH);
+    while(1) {
+        St7032_ClearDisplay();
+
+        for(uint8_t i = 0; i < 0xFF; i++) {
+            St7032_CursorByPotision(1, 1);
+            for(uint8_t j = 0; j < 8; j++) {
+                St7032_WriteData(i);
+            }
+            St7032_ShowDisplayByPotision(2, 1, 0x30);
+            St7032_ShowDisplayByPotision(2, 2, 0x78);
+            St7032_ShowDisplayByPotision(2, 3, St7032_ConvertHexNumber((i & 0xF0) >> 4));
+            St7032_ShowDisplayByPotision(2, 4, St7032_ConvertHexNumber((i & 0x0F)));
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+
+/*
+// Sample
     St7032_CreateOrignalCharacter(0x01, degree, sizeof(degree)/sizeof(uint8_t));
 
     uint8_t moji1[] = "Hello";
@@ -523,6 +543,7 @@ void vLoopLcdSt7032Task(void *pvParametes)
         St7032_ShowDisplayByPotision(2, 7, 0x25);
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
+*/
     vTaskDelete(NULL); // Should never get to here...
 }
 #endif

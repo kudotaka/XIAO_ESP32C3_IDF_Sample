@@ -1,5 +1,5 @@
-// https://akizukidenshi.com/download/ds/akizuki/ae-aqm0802a.pdf
-// http://akizukidenshi.com/download/ds/xiamen/AQM1602_rev2.pdf
+// https://akizukidenshi.com/download/ds/sitronix/st7032.pdf
+// https://akizukidenshi.com/download/ds/xiamen/AQM0802A-FLW-GBW.pdf
 #include "freertos/FreeRTOS.h"
 #include "st7032.h"
 
@@ -29,6 +29,17 @@
 
 static I2CDevice_t st7032_device;
 static gpio_num_t backlight_pin;
+
+uint8_t St7032_ConvertHexNumber(uint8_t number) {
+    if (number > 16) {
+        return 0;
+    }
+    if (number > 9) {
+        return 0x41 + number % 10;
+    } else {
+        return 0x30 + number;
+    }
+}
 
 void St7032_CreateOrignalCharacter(uint8_t address, uint8_t* pattern, uint8_t pattern_len) {
     if (address > ST7032_CGRAM_POSITION_MAX) {
