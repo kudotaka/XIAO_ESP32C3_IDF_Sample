@@ -30,7 +30,7 @@
 void ui_datetime_set(char *dateTxt);
 #endif
 
-#ifdef CONFIG_SOFTWARE_I2C_UNIT_ENV2_SUPPORT
+#ifdef CONFIG_SOFTWARE_UNIT_ENV2_SUPPORT
 void ui_temperature_update(int32_t value);
 void ui_humidity_update(int32_t value);
 #endif

@@ -25,8 +25,17 @@ menu "Seeed XIAO hardware enable"
         config SOFTWARE_MODEL_SEEED_XIAO_RP2040
             bool "MODEL-Seeed XIAO RP2040"
     endchoice
+    config SOFTWARE_EXPANSION_BOARD_SUPPORT
+        bool "Expansion Board"
+        default n
+    config SOFTWARE_GROVE_SHIELD_SUPPORT
+        bool "Grove Shield"
+        default n
+    config SOFTWARE_BUZZER_SUPPORT
+        bool "BUZZER-Hardware"
+        default n
     config SOFTWARE_BUTTON_SUPPORT
-        bool "IO-UNIT-BUTTON"
+        bool "BUTTON-Hardware"
         default n
     config SOFTWARE_SSD1306_SUPPORT
         bool "I2C-UNIT-Display(SSD1306/SSD1315)"
@@ -36,24 +45,7 @@ menu "Seeed XIAO hardware enable"
     config SOFTWARE_RTC_SUPPORT
         bool "I2C-UNIT-RTC(BM8563)"
         default n
-    config SOFTWARE_SK6812_SUPPORT
-        bool "IO-UNIT-RGB(SK6812)"
-        default n
-    choice
-        prompt "Set Model"
-        default SOFTWARE_MODEL_RGBUNIT_3
-        depends on SOFTWARE_SK6812_SUPPORT
-        config SOFTWARE_MODEL_NEOHEX_37
-            bool "MODEL-NEOHEX/HEX (37)"
-        config SOFTWARE_MODEL_RGBUNIT_3
-            bool "MODEL-RGB LED UNIT (3)"
-        config SOFTWARE_MODEL_KEYUNIT_1
-            bool "MODEL-RGB LED UNIT (1)"
-    endchoice
     config SOFTWARE_EXTERNAL_LED_SUPPORT
         bool "IO-UNIT-EXTERNAL-LED"
-        default n
-    config SOFTWARE_I2C_UNIT_ENV2_SUPPORT
-        bool "I2C-UNIT-ENV2"
         default n
 endmenu

@@ -15,10 +15,6 @@
 #include "ui.h"
 #include "wifi.h"
 
-#ifdef CONFIG_SOFTWARE_I2C_UNIT_ENV2_SUPPORT
-#include "SHT3X.h"
-#endif
-
 #if ( CONFIG_SOFTWARE_UNIT_ENV2_SUPPORT \
     || CONFIG_SOFTWARE_UNIT_SK6812_SUPPORT \
     || CONFIG_SOFTWARE_UNIT_4DIGIT_DISPLAY_SUPPORT \
@@ -29,6 +25,44 @@
 #endif
 
 static const char *TAG = "MY-MAIN";
+
+#ifdef CONFIG_SOFTWARE_BUZZER_SUPPORT
+TaskHandle_t xBuzzer;
+static void vLoopBuzzerTask(void* pvParameters) {
+    ESP_LOGI(TAG, "Buzzer is start!");
+    XIAO_Buzzer_Init(PORT_D3_PIN);
+    uint32_t DUTY_MAX_VALUE = 8190;
+    uint32_t duty[] = {DUTY_MAX_VALUE/4*2};
+    while (1) {
+        vTaskSuspend(NULL);
+        for (uint32_t i = 0; i < sizeof(duty)/sizeof(uint32_t); i++)
+        {
+            ESP_LOGI(TAG, "Buzzer duty:%d", duty[i]);
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 261.6);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 293.665);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 329.63);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 349.228);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 391.995);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 440);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 493.883);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+            XIAO_Buzzer_Play_Duty_Frequency(duty[i], 523.251);
+            vTaskDelay( pdMS_TO_TICKS(500) );
+
+            XIAO_Buzzer_Stop();
+            vTaskDelay( pdMS_TO_TICKS(5000) );
+        }
+    }
+
+    vTaskDelete(NULL); // Should never get to here...
+}
+#endif
 
 #ifdef CONFIG_SOFTWARE_BUTTON_SUPPORT
 TaskHandle_t xButton;
@@ -69,6 +103,9 @@ static void button_task(void* pvParameters) {
         }
         if (Button_WasLongPress(button_d1_pin, pdMS_TO_TICKS(1000))) { // 1Sec
             ESP_LOGI(TAG, "PORT_D1_PIN BUTTON LONGPRESS!");
+#ifdef CONFIG_SOFTWARE_BUZZER_SUPPORT
+            vTaskResume(xBuzzer);
+#endif
 #ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
             ui_button_label_update(false);
 #endif
@@ -220,25 +257,29 @@ void vLoopClockTask(void *pvParametes)
 }
 #endif
 
-#ifdef CONFIG_SOFTWARE_SK6812_SUPPORT
-TaskHandle_t xRGBLedBlink;
-void vLoopRGBLedBlinkTask(void *pvParametes)
+#if CONFIG_SOFTWARE_UNIT_SK6812_SUPPORT
+TaskHandle_t xExternalRGBLedBlink;
+void vexternal_LoopRGBLedBlinkTask(void *pvParametes)
 {
-    ESP_LOGI(TAG, "start vLoopRGBLedBlinkTask");
+    ESP_LOGI(TAG, "start vexternal_LoopRGBLedBlinkTask");
+
+    pixel_settings_t px_ext1;
     uint8_t blink_count = 5;
     uint32_t colors[] = {SK6812_COLOR_BLUE, SK6812_COLOR_LIME, SK6812_COLOR_AQUA
                     , SK6812_COLOR_RED, SK6812_COLOR_MAGENTA, SK6812_COLOR_YELLOW
                     , SK6812_COLOR_WHITE};
-
+    Sk6812_Init(&px_ext1, PORT_D10_PIN, RMT_CHANNEL_0, 37*2);
     while (1) {
         for (uint8_t c = 0; c < sizeof(colors)/sizeof(uint32_t); c++) {
             for (uint8_t i = 0; i < blink_count; i++) {
-                XIAO_Sk6812_SetAllColor(colors[c]);
-                XIAO_Sk6812_Show();
+                Sk6812_SetAllColor(&px_ext1, colors[c]);
+                Sk6812_Show(&px_ext1, RMT_CHANNEL_0);
+    ESP_LOGI(TAG, "Sk6812 show");
                 vTaskDelay(pdMS_TO_TICKS(1000));
 
-                XIAO_Sk6812_SetAllColor(SK6812_COLOR_OFF);
-                XIAO_Sk6812_Show();
+                Sk6812_SetAllColor(&px_ext1, SK6812_COLOR_OFF);
+                Sk6812_Show(&px_ext1, RMT_CHANNEL_0);
+    ESP_LOGI(TAG, "Sk6812 off");
                 vTaskDelay(pdMS_TO_TICKS(1000));
             }
         }
@@ -246,7 +287,7 @@ void vLoopRGBLedBlinkTask(void *pvParametes)
 }
 #endif
 
-#ifdef CONFIG_SOFTWARE_I2C_UNIT_ENV2_SUPPORT
+#ifdef CONFIG_SOFTWARE_UNIT_ENV2_SUPPORT
 TaskHandle_t xUnitEnv2;
 void vLoopUnitEnv2Task(void *pvParametes)
 {
@@ -548,6 +589,7 @@ void vLoopLcdSt7032Task(void *pvParametes)
 }
 #endif
 
+
 void app_main() {
     ESP_LOGI(TAG, "app_main() start.");
     esp_log_level_set("*", ESP_LOG_ERROR);
@@ -577,20 +619,10 @@ void app_main() {
     xTaskCreatePinnedToCore(&external_led_task, "external_led_task", 4096 * 1, NULL, 2, &xExternalLED, 1);
 #endif
 
-#ifdef CONFIG_SOFTWARE_SK6812_SUPPORT
-    // RGB LED BLINK
-    uint16_t led_count = 1;
-#if CONFIG_SOFTWARE_MODEL_NEOHEX_37
-    led_count = 37;
-#elif CONFIG_SOFTWARE_MODEL_RGBUNIT_3
-    led_count = 3;
-#else
-    led_count = 1;
+#if CONFIG_SOFTWARE_UNIT_SK6812_SUPPORT
+    // EXTERNAL RGB LED BLINK
+    xTaskCreatePinnedToCore(&vexternal_LoopRGBLedBlinkTask, "external_rgb_led_blink_task", 4096 * 1, NULL, 2, &xExternalRGBLedBlink, 1);
 #endif
-    XIAO_Sk6812_Init(PORT_D1_PIN, led_count);
-    xTaskCreatePinnedToCore(&vLoopRGBLedBlinkTask, "rgb_led_blink_task", 4096 * 1, NULL, 2, &xRGBLedBlink, 1);
-#endif
-
 
 #ifdef CONFIG_SOFTWARE_RTC_SUPPORT
     // rtc
@@ -600,7 +632,7 @@ void app_main() {
 #endif
 
 
-#ifdef CONFIG_SOFTWARE_I2C_UNIT_ENV2_SUPPORT
+#ifdef CONFIG_SOFTWARE_UNIT_ENV2_SUPPORT
     // UI ACTIVE
     xTaskCreatePinnedToCore(&vLoopUnitEnv2Task, "unit_env2_task", 4096 * 1, NULL, 2, &xUnitEnv2, 1);
 #endif
@@ -613,6 +645,11 @@ void app_main() {
 #ifdef CONFIG_SOFTWARE_I2C_LCD_ST7032_SUPPORT
     // LCD_ST7032
     xTaskCreatePinnedToCore(&vLoopLcdSt7032Task, "lcd_st7032_task", 4096 * 1, NULL, 2, &xLcdSt7032, 1);
+#endif
+
+#ifdef CONFIG_SOFTWARE_BUZZER_SUPPORT
+    // BUZZER
+    xTaskCreatePinnedToCore(&vLoopBuzzerTask, "buzzer_task", 4096 * 1, NULL, 2, &xBuzzer, 1);
 #endif
 
 }

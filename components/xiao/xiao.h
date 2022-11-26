@@ -1,10 +1,6 @@
 #pragma once
 #include "freertos/FreeRTOS.h"
 
-#if CONFIG_SOFTWARE_SK6812_SUPPORT
-#include "sk6812.h"
-#endif
-
 #if CONFIG_SOFTWARE_BUTTON_SUPPORT
 #include "button.h"
 #endif
@@ -78,25 +74,6 @@ void XIAO_Init(void);
 void XIAO_Button_Init(void);
 #endif
 
-#if CONFIG_SOFTWARE_SK6812_SUPPORT
-#define SK6812_COLOR_OFF     0x000000
-#define SK6812_COLOR_BLACK   0x000000
-#define SK6812_COLOR_BLUE    0x0000FF
-#define SK6812_COLOR_LIME    0x00FF00
-#define SK6812_COLOR_AQUA    0x00FFFF
-#define SK6812_COLOR_RED     0xFF0000
-#define SK6812_COLOR_MAGENTA 0xFF00FF
-#define SK6812_COLOR_YELLOW  0xFFFF00
-#define SK6812_COLOR_WHITE   0xFFFFFF
-
-void XIAO_Sk6812_Init(gpio_num_t pin, uint16_t count);
-void XIAO_Sk6812_SetColor(uint16_t pos, uint32_t color);
-void XIAO_Sk6812_SetAllColor(uint32_t color);
-void XIAO_Sk6812_SetBrightness(uint8_t brightness);
-void XIAO_Sk6812_Show(void);
-void XIAO_Sk6812_Clear(void);
-#endif
-
 #if CONFIG_SOFTWARE_SSD1306_SUPPORT
 void XIAO_Display_Init(void);
 #endif
@@ -111,4 +88,12 @@ esp_err_t XIAO_Port_I2C_Write(I2CDevice_t device, uint32_t register_address, uin
 void XIAO_Port_I2C_Close(I2CDevice_t device);
 uint32_t XIAO_Port_ADC_ReadRaw(void);
 uint32_t XIAO_Port_ADC_ReadMilliVolts(void);
+#endif
+
+#ifdef CONFIG_SOFTWARE_BUZZER_SUPPORT
+void XIAO_Buzzer_Init(gpio_num_t pin);
+void XIAO_Buzzer_Play(void);
+void XIAO_Buzzer_Stop(void);
+void XIAO_Buzzer_Play_Duty(uint32_t duty);
+void XIAO_Buzzer_Play_Duty_Frequency(uint32_t duty, uint32_t frequency);
 #endif

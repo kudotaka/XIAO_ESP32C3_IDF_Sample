@@ -14,6 +14,16 @@
 #include "lvgl_helpers.h"
 #include "xiao.h"
 
+#ifdef CONFIG_SOFTWARE_BUZZER_SUPPORT
+#include "driver/ledc.h"
+#define LEDC_TIMER              LEDC_TIMER_0
+#define LEDC_MODE               LEDC_LOW_SPEED_MODE
+#define LEDC_CHANNEL            LEDC_CHANNEL_0
+#define LEDC_DUTY_RES           LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
+#define LEDC_DUTY               (4095) // Set duty to 50%. ((2 ** 13) - 1) * 50% = 4095
+#define LEDC_FREQUENCY          (5000) // Frequency in Hertz. Set frequency at 5 kHz
+
+#endif
 
 static const char *TAG = "XIAO";
 
@@ -39,51 +49,6 @@ void XIAO_Init(void) {
 #if CONFIG_SOFTWARE_BUTTON_SUPPORT
 void XIAO_Button_Init(void) {
     Button_Init();
-}
-#endif
-/* ----------------------------------------------- End -----------------------------------------------*/
-/* ===================================================================================================*/
-
-/* ===================================================================================================*/
-/* --------------------------------------------- SK6812 ----------------------------------------------*/
-#if CONFIG_SOFTWARE_SK6812_SUPPORT
-pixel_settings_t px;
-
-void XIAO_Sk6812_Init(gpio_num_t pin, uint16_t count) {
-    px.pixel_count = count;
-    px.brightness = 10;
-    sprintf(px.color_order, "GRBW");
-    px.nbits = 24;
-    px.timings.t0h = (350);
-    px.timings.t0l = (800);
-    px.timings.t1h = (600);
-    px.timings.t1l = (700);
-    px.timings.reset = 80000;
-    px.pixels = (uint8_t *)malloc((px.nbits / 8) * px.pixel_count);
-    neopixel_init(pin, RMT_CHANNEL_0);
-    np_clear(&px);
-}
-
-void XIAO_Sk6812_SetColor(uint16_t pos, uint32_t color) {
-    np_set_pixel_color(&px, pos, color << 8);
-}
-
-void XIAO_Sk6812_SetAllColor(uint32_t color) {
-    for (uint8_t i = 0; i < px.pixel_count; i++) {
-        np_set_pixel_color(&px, i, color << 8);
-    }
-}
-
-void XIAO_Sk6812_SetBrightness(uint8_t brightness) {
-    px.brightness = brightness;
-}
-
-void XIAO_Sk6812_Show(void) {
-    np_show(&px, RMT_CHANNEL_0);
-}
-
-void XIAO_Sk6812_Clear(void) {
-    np_clear(&px);
 }
 #endif
 /* ----------------------------------------------- End -----------------------------------------------*/
@@ -326,6 +291,59 @@ static void guiTask(void *pvParameter) {
     // A task should NEVER return
     vTaskDelete(NULL);
 }
+#endif
+/* ----------------------------------------------- End -----------------------------------------------*/
+/* ===================================================================================================*/
+
+/* ===================================================================================================*/
+/* --------------------------------------------- BUZZER ----------------------------------------------*/
+#ifdef CONFIG_SOFTWARE_BUZZER_SUPPORT
+void XIAO_Buzzer_Init(gpio_num_t pin) {
+//    XIAO_Port_PinMode(pin, OUTPUT);
+
+    // Prepare and then apply the LEDC PWM timer configuration
+    ledc_timer_config_t ledc_timer = {
+        .speed_mode       = LEDC_MODE,
+        .timer_num        = LEDC_TIMER,
+        .duty_resolution  = LEDC_DUTY_RES,
+        .freq_hz          = LEDC_FREQUENCY,  // Set output frequency at 5 kHz
+        .clk_cfg          = LEDC_AUTO_CLK
+    };
+    ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+
+    // Prepare and then apply the LEDC PWM channel configuration
+    ledc_channel_config_t ledc_channel = {
+        .speed_mode     = LEDC_MODE,
+        .channel        = LEDC_CHANNEL,
+        .timer_sel      = LEDC_TIMER,
+        .intr_type      = LEDC_INTR_DISABLE,
+//        .gpio_num       = LEDC_OUTPUT_IO,
+        .gpio_num       = pin,
+        .duty           = 0, // Set duty to 0%
+        .hpoint         = 0
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
+}
+
+void XIAO_Buzzer_Play() {
+    XIAO_Buzzer_Play_Duty(LEDC_DUTY);
+}
+
+void XIAO_Buzzer_Stop() {
+    ESP_ERROR_CHECK(ledc_stop(LEDC_MODE, LEDC_CHANNEL, 0));
+}
+
+void XIAO_Buzzer_Play_Duty(uint32_t duty) {
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+}
+
+void XIAO_Buzzer_Play_Duty_Frequency(uint32_t duty, uint32_t frequency) {
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty));
+    ESP_ERROR_CHECK(ledc_set_freq(LEDC_MODE, LEDC_TIMER, frequency));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+}
+
 #endif
 /* ----------------------------------------------- End -----------------------------------------------*/
 /* ===================================================================================================*/

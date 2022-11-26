@@ -37,7 +37,7 @@
 #include "sk6812.h"
 
 #include "soc/dport_access.h"
-#include "soc/dport_reg.h"
+//#include "soc/dport_reg.h"
 
 static SemaphoreHandle_t neopixel_sem = NULL;
 static uint16_t neopixel_buf_len = 0;
