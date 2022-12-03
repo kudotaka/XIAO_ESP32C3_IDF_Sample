@@ -6,8 +6,8 @@
 
 
 typedef enum _LedActiveType{
-    ACTIVE_LOW = 0,
-    ACTIVE_HIGH = 1,
+    LED_ACTIVE_LOW = 0,
+    LED_ACTIVE_HIGH = 1,
 } LedActiveType;
 
 typedef struct _Led_t  {

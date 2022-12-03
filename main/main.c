@@ -66,28 +66,37 @@ static void vLoopBuzzerTask(void* pvParameters) {
 
 #ifdef CONFIG_SOFTWARE_BUTTON_SUPPORT
 TaskHandle_t xButton;
-Button_t* button_d1_pin;
-Button_t* button_d7_pin;
-Button_t* button_d6_pin;
 Button_t* button_d0_pin;
+Button_t* button_d1_pin;
+//Button_t* button_d7_pin;
+//Button_t* button_d6_pin;
+Button_t* button_d9_pin;
 
 static void button_task(void* pvParameters) {
     ESP_LOGI(TAG, "start button_task");
 
-    if (Button_Enable(PORT_D1_PIN, ACTIVE_LOW) == ESP_OK) {
-        button_d1_pin = Button_Attach(PORT_D1_PIN, ACTIVE_LOW);
+    if (Button_Enable(PORT_D0_PIN, BUTTON_ACTIVE_HIGH) == ESP_OK) {
+        button_d0_pin = Button_Attach(PORT_D0_PIN, BUTTON_ACTIVE_HIGH);
+    }
+    if (Button_Enable(PORT_D1_PIN, BUTTON_ACTIVE_HIGH) == ESP_OK) {
+        button_d1_pin = Button_Attach(PORT_D1_PIN, BUTTON_ACTIVE_HIGH);
+    }
+/*
+    if (Button_Enable(PORT_D7_PIN, BUTTON_ACTIVE_LOW) == ESP_OK) {
+        button_d7_pin = Button_Attach(PORT_D7_PIN, BUTTON_ACTIVE_LOW);
+    }
+    if (Button_Enable(PORT_D6_PIN, BUTTON_ACTIVE_LOW) == ESP_OK) {
+        button_d6_pin = Button_Attach(PORT_D6_PIN, BUTTON_ACTIVE_LOW);
+    }
+*/
+    if (Button_Enable(PORT_D9_PIN, BUTTON_ACTIVE_HIGH) == ESP_OK) {
+        button_d9_pin = Button_Attach(PORT_D9_PIN, BUTTON_ACTIVE_HIGH);
     }
 
-    if (Button_Enable(PORT_D7_PIN, ACTIVE_LOW) == ESP_OK) {
-        button_d7_pin = Button_Attach(PORT_D7_PIN, ACTIVE_LOW);
-    }
-    if (Button_Enable(PORT_D6_PIN, ACTIVE_LOW) == ESP_OK) {
-        button_d6_pin = Button_Attach(PORT_D6_PIN, ACTIVE_LOW);
-    }
-    if (Button_Enable(PORT_D0_PIN, ACTIVE_HIGH) == ESP_OK) {
-        button_d0_pin = Button_Attach(PORT_D0_PIN, ACTIVE_HIGH);
-    }
     while(1){
+        if (Button_WasReleased(button_d9_pin)) {
+            ESP_LOGI(TAG, "PORT_D9_PIN BUTTON RELEASED!");
+        }
 
         if (Button_WasPressed(button_d1_pin)) {
             ESP_LOGI(TAG, "PORT_D1_PIN BUTTON PRESSED!");
@@ -110,7 +119,25 @@ static void button_task(void* pvParameters) {
             ui_button_label_update(false);
 #endif
         }
-
+        if (Button_WasPressed(button_d0_pin)) {
+            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON PRESSED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(true);
+#endif
+        }
+        if (Button_WasReleased(button_d0_pin)) {
+            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON RELEASED!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+        if (Button_WasLongPress(button_d0_pin, pdMS_TO_TICKS(1000))) { // 1Sec
+            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON LONGPRESS!");
+#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
+            ui_button_label_update(false);
+#endif
+        }
+/*
         if (Button_WasPressed(button_d7_pin)) {
             ESP_LOGI(TAG, "PORT_D7_PIN BUTTON PRESSED!");
 #ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
@@ -147,24 +174,7 @@ static void button_task(void* pvParameters) {
             ui_button_label_update(false);
 #endif
         }
-        if (Button_WasPressed(button_d0_pin)) {
-            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON PRESSED!");
-#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
-            ui_button_label_update(true);
-#endif
-        }
-        if (Button_WasReleased(button_d0_pin)) {
-            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON RELEASED!");
-#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
-            ui_button_label_update(false);
-#endif
-        }
-        if (Button_WasLongPress(button_d0_pin, pdMS_TO_TICKS(1000))) { // 1Sec
-            ESP_LOGI(TAG, "PORT_D0_PIN BUTTON LONGPRESS!");
-#ifdef CONFIG_SOFTWARE_SSD1306_SUPPORT
-            ui_button_label_update(false);
-#endif
-        }
+*/
 
         vTaskDelay(pdMS_TO_TICKS(80));
     }
@@ -323,22 +333,30 @@ void vLoopUnitEnv2Task(void *pvParametes)
 TaskHandle_t xExternalLED;
 Led_t* led_ext1;
 Led_t* led_ext2;
+Led_t* led_ext10;
 static void external_led_task(void* pvParameters) {
     ESP_LOGI(TAG, "start external_led_task");
     Led_Init();
-    if (Led_Enable(PORT_D1_PIN, ACTIVE_HIGH) == ESP_OK) {
-        led_ext1 = Led_Attach(PORT_D1_PIN, ACTIVE_HIGH);
+
+    if (Led_Enable(PORT_D2_PIN, LED_ACTIVE_HIGH) == ESP_OK) {
+        led_ext1 = Led_Attach(PORT_D2_PIN, LED_ACTIVE_HIGH);
     }
-    if (Led_Enable(PORT_D3_PIN, ACTIVE_LOW) == ESP_OK) {
-        led_ext2 = Led_Attach(PORT_D3_PIN, ACTIVE_LOW);
+    if (Led_Enable(PORT_D3_PIN, LED_ACTIVE_HIGH) == ESP_OK) {
+        led_ext2 = Led_Attach(PORT_D3_PIN, LED_ACTIVE_HIGH);
     }
+
+    if (Led_Enable(PORT_D10_PIN, LED_ACTIVE_HIGH) == ESP_OK) {
+        led_ext10 = Led_Attach(PORT_D10_PIN, LED_ACTIVE_HIGH);
+    }
+
     while(1){
         Led_OnOff(led_ext1, true);
         Led_OnOff(led_ext2, true);
+        Led_OnOff(led_ext10, true);
         vTaskDelay(pdMS_TO_TICKS(500));
-
         Led_OnOff(led_ext1, false);
         Led_OnOff(led_ext2, false);
+        Led_OnOff(led_ext10, false);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
     vTaskDelete(NULL); // Should never get to here...

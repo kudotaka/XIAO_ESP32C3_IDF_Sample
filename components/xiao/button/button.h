@@ -11,8 +11,8 @@ typedef enum {
 } PressEvent;
 
 typedef enum _ButtonActiveType{
-    ACTIVE_LOW = 0,
-    ACTIVE_HIGH = 1,
+    BUTTON_ACTIVE_LOW = 0,
+    BUTTON_ACTIVE_HIGH = 1,
 } ButtonActiveType;
 
 typedef struct _Button_t  {

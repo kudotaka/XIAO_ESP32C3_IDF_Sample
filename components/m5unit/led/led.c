@@ -24,7 +24,7 @@ esp_err_t Led_Enable(gpio_num_t pin, LedActiveType type) {
     io_conf.pin_bit_mask = (1ULL << pin);
 
     io_conf.mode = GPIO_MODE_OUTPUT;
-    if (type == ACTIVE_LOW) {
+    if (type == LED_ACTIVE_LOW) {
         io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     } else {
@@ -51,7 +51,7 @@ Led_t* Led_Attach(gpio_num_t pin, LedActiveType type) {
 esp_err_t Led_OnOff(Led_t* led, uint8_t nextState) {
     xSemaphoreTake(led_lock, portMAX_DELAY);
     uint8_t value = 0;
-    if (led->type == ACTIVE_LOW) {
+    if (led->type == LED_ACTIVE_LOW) {
         value = nextState ? 0 : 1;
     } else {
         value = nextState ? 1 : 0;

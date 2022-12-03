@@ -25,7 +25,7 @@ esp_err_t Button_Enable(gpio_num_t pin, ButtonActiveType type) {
     io_conf.pin_bit_mask = (1ULL << pin);
 
     io_conf.mode = GPIO_MODE_INPUT;
-    if (type == ACTIVE_LOW) {
+    if (type == BUTTON_ACTIVE_LOW) {
         io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     } else {
@@ -134,7 +134,7 @@ static void Button_UpdateTask(void *arg) {
         xSemaphoreTake(button_lock, portMAX_DELAY);
         button = button_ahead;
         while (button != NULL) {
-            if (button->type == ACTIVE_LOW) {
+            if (button->type == BUTTON_ACTIVE_LOW) {
                 Button_Update(button, !Button_Read(button->pin));
             } else {
                 Button_Update(button, Button_Read(button->pin));
