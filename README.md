@@ -11,6 +11,7 @@
 - [Grove - 0.96インチ OLEDディスプレイ（SSD1315）](https://www.switch-science.com/collections/seeed/products/7002)
 - [M5Stack用メカニカルキーボタンユニット](M5Stack用メカニカルキーボタンユニット)
 - [M5Stack用ミニプロトユニット](https://www.switch-science.com/collections/m5stack/products/6557)を使ったお手製ボタンとLEDユニット
+- [M5Stackプロトユニット用プラスチックケース（4個入）](https://www.switch-science.com/collections/m5stack/products/8451)と[JLCPCB](https://jlcpcb.com/)で製造したPCBを使ったお手製ボタンとLEDユニット
 
 ### 環境
 - "Seeed Studio XIAO Groveシールド"のI2Cポートに"M5Stack用拡張ハブユニット"を接続。
@@ -27,6 +28,7 @@
 - RGBなLEDは、色を変化させながら点滅する。
 - LEDは、点滅する。
 - ディスプレイは、WiFi表示、日付/時間表示、湿度・温度表示、ボタンクリック時のOK表示をする。
+
 <img src="images/display0.png" width="400px">
 
 ### 2022.11.03追記
@@ -35,3 +37,10 @@
 - PCBをJLCPCBにて製造。
 - 秋月にてOSL10564-Iシリーズではんだ付け。
 - 6桁のDigitDisplayが完成。
+
+### 2022.12.03追記
+<img src="images/unit0.png" width="400px">
+
+- PCBをJLCPCBにて製造。
+- 秋月にてタクトスイッチと3mmLEDではんだ付け。
+- Button×2、LED×2、Button×1&LED×1が完成。
